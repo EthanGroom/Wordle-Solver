@@ -17,14 +17,13 @@ class Menu:
         user_input = input()
         rand_num = random.randrange(14854)
         if user_input == "1":
-            game = WordleGame(self.word_list[rand_num], True)
+            game = WordleGame(self.word_list[rand_num], True, self.word_list)
             game.start()
         elif user_input == "2":
-            game = WordleGame(self.word_list[rand_num], False)
+            game = WordleGame(self.word_list[rand_num], False, self.word_list)
             game.start()
         else:
             print("Invalid option")
-
 
     def create_word_list(self):
         file = open("words.txt", "r")
@@ -52,21 +51,27 @@ class Menu:
 
 
 class WordleGame:
-    def __init__(self, word, human_player):
+    def __init__(self, word, human_player, word_list):
         self.target = word
         self.human_player = human_player
+        self.word_list = word_list
 
     def start(self):
         print("Starting Wordle Game")
         if self.human_player:
-            for i in range(6):
+            i = 0
+            while i < 6:
                 print(f"Guess {i + 1}:")
                 guess = input().upper()
+                if len(guess) != 5 or guess not in self.word_list:
+                    print("Invalid guess!")
+                    continue
                 if guess == self.target:
                     print(f"Solved in {i + 1} guesses!")
                     break
                 else:
                     self.check_guess(guess)
+                    i += 1
             print(f"Word was {self.target}")
 
         if not self.human_player:
