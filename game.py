@@ -8,8 +8,6 @@ ANSI_YELLOW = "\u001B[33m" + "\u001B[7m"
 class Menu:
     def __init__(self):
         self.word_list = []
-        self.letter_frequencies = {}
-        self.word_scores = {}
 
     def start(self):
         self.create_word_list()
@@ -29,25 +27,7 @@ class Menu:
         file = open("words.txt", "r")
         data = file.read()
         self.word_list = data.upper().splitlines()
-        print(self.word_list)
         file.close()
-
-        for word in self.word_list:
-            for letter in word:
-                if letter in self.letter_frequencies:
-                    self.letter_frequencies[letter] += 1
-                else:
-                    self.letter_frequencies[letter] = 1
-
-        for word in self.word_list:
-            score = 0
-            for letter in word:
-                score += self.letter_frequencies[letter]
-            self.word_scores[word] = score
-
-        print(self.letter_frequencies)
-        print(self.word_scores)
-        print(max(zip(self.word_scores.values(), self.word_scores.keys()))[1])
 
 
 class WordleGame:
@@ -55,6 +35,12 @@ class WordleGame:
         self.target = word
         self.human_player = human_player
         self.word_list = word_list
+        self.letter_frequencies = {}
+        self.word_scores = {}
+        self.letters_not_in_word = set()
+        self.prev_guess = ""
+        self.green_letters = ['-'] * 5
+        self.yellow_letters = ['-'] * 5
 
     def start(self):
         print("Starting Wordle Game")
@@ -75,7 +61,42 @@ class WordleGame:
             print(f"Word was {self.target}")
 
         if not self.human_player:
-            pass
+            for word in self.word_list:
+                for letter in word:
+                    if letter in self.letter_frequencies:
+                        self.letter_frequencies[letter] += 1
+                    else:
+                        self.letter_frequencies[letter] = 1
+
+            for word in self.word_list:
+                score = 0
+                for letter in word:
+                    score += self.letter_frequencies[letter]
+                self.word_scores[word] = score
+
+            first_guess = max(
+                (score, key)
+                for score, key in zip(self.word_scores.values(), self.word_scores.keys())
+                if len(set(key)) == len(key)
+            )[1]
+
+            print(f"Starting guess is: {first_guess}")
+            i = 0
+            while i < 6:
+                print(f"Guess {i + 1}:")
+                if i == 0:
+                    guess = first_guess
+                    self.prev_guess = guess
+                else:
+                    guess = self.generate_ai_guess()
+                    self.prev_guess = guess
+                if guess == self.target:
+                    print(f"Solved in {i + 1} guesses!")
+                    break
+                else:
+                    self.check_guess(guess)
+                    i += 1
+            print(f"Word was {self.target}")
 
     def check_guess(self, guess):
         green = [False, False, False, False, False]
@@ -84,16 +105,61 @@ class WordleGame:
         for count, letter in enumerate(guess):
             if letter is self.target[count]:
                 green[count] = True
+                self.green_letters[count] = letter
                 marked.append(letter)
                 colors[count] = ANSI_GREEN
         for count, letter in enumerate(guess):
             if letter in self.target and not green[count] and self.target.count(letter) > marked.count(letter):
                 marked.append(letter)
                 colors[count] = ANSI_YELLOW
+                self.yellow_letters[count] = letter
+            elif letter not in self.target:
+                self.letters_not_in_word.add(letter)
 
         for count, letter in enumerate(guess):
             print(colors[count] + letter, end="", flush=True)
         print("\u001B[0m")
+
+    def generate_ai_guess(self) -> str:
+        self.word_scores.pop(self.prev_guess)
+
+        words_to_remove = set()
+
+        yellow_set = {letter for letter in self.yellow_letters if letter != '-'}
+
+        for word in list(self.word_scores.keys()):
+            remove_word = False
+
+            if any(letter in self.letters_not_in_word for letter in word):
+                remove_word = True
+
+            if not remove_word:
+                for count, letter in enumerate(word):
+                    if self.green_letters[count] != '-' and self.green_letters[count] != letter:
+                        remove_word = True
+                        break
+
+            if not remove_word:
+                if not yellow_set.issubset(set(word)):
+                    remove_word = True
+                else:
+                    for count, letter in enumerate(word):
+                        if self.yellow_letters[count] != '-' and self.yellow_letters[count] == letter:
+                            remove_word = True
+                            break
+
+            if remove_word:
+                words_to_remove.add(word)
+
+        for word in words_to_remove:
+            self.word_scores.pop(word)
+
+        self.yellow_letters = ['-'] * 5
+
+        return max(
+            (score, word)
+            for word, score in self.word_scores.items()
+        )[1]
 
 
 if __name__ == "__main__":
