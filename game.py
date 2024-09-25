@@ -1,4 +1,5 @@
 import random
+from collections import Counter
 
 ANSI_RESET = "\u001B[0m" + "\u001B[7m"
 ANSI_GREEN = "\u001b[32m" + "\u001B[7m"
@@ -41,6 +42,7 @@ class WordleGame:
         self.prev_guess = ""
         self.green_letters = ['-'] * 5
         self.yellow_letters = ['-'] * 5
+        self.no_more_occurrences = set()
 
     def start(self):
         print("Starting Wordle Game")
@@ -113,6 +115,8 @@ class WordleGame:
                 marked.append(letter)
                 colors[count] = ANSI_YELLOW
                 self.yellow_letters[count] = letter
+            elif letter in self.target and not green[count] and self.target.count(letter) == marked.count(letter):
+                self.no_more_occurrences.add(letter)
             elif letter not in self.target:
                 self.letters_not_in_word.add(letter)
 
@@ -122,6 +126,8 @@ class WordleGame:
 
     def generate_ai_guess(self) -> str:
         self.word_scores.pop(self.prev_guess)
+
+        count_occurrences = Counter([letter for letter in self.green_letters if letter != '-'])
 
         words_to_remove = set()
 
@@ -147,6 +153,13 @@ class WordleGame:
                         if self.yellow_letters[count] != '-' and self.yellow_letters[count] == letter:
                             remove_word = True
                             break
+
+            if not remove_word:
+                word_counter = Counter(word)
+                for letter in self.no_more_occurrences:
+                    if word_counter[letter] > count_occurrences[letter]:
+                        remove_word = True
+                        break
 
             if remove_word:
                 words_to_remove.add(word)
