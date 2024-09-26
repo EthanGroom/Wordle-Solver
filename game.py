@@ -12,7 +12,7 @@ class Menu:
 
     def start(self):
         self.create_word_list()
-        print("1. Play Wordle\n2. AI plays Wordle")
+        print("1. Play Wordle\n2. AI plays Wordle\n3. AI plays every Wordle game")
         user_input = input()
         rand_num = random.randrange(14854)
         if user_input == "1":
@@ -21,6 +21,19 @@ class Menu:
         elif user_input == "2":
             game = WordleGame(self.word_list[rand_num], False, self.word_list)
             game.start()
+        elif user_input == "3":
+            solves = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
+            for word in self.word_list:
+                game = WordleGame(word, False, self.word_list)
+                solve = game.start()
+                solves[solve] += 1
+            for solve in solves:
+                if solve != 0 and solve != 1:
+                    print(f"Solved in {solve} moves: {solves[solve]}")
+                if solve == 1:
+                    print(f"Solved in {solve} move: {solves[solve]}")
+                if solve == 0:
+                    print(f"\nNo solution: {solves[solve]}")
         else:
             print("Invalid option")
 
@@ -94,11 +107,13 @@ class WordleGame:
                     self.prev_guess = guess
                 if guess == self.target:
                     print(f"Solved in {i + 1} guesses!")
-                    break
+                    print(f"Word was {self.target}")
+                    return i + 1
                 else:
                     self.check_guess(guess)
                     i += 1
             print(f"Word was {self.target}")
+            return 0
 
     def check_guess(self, guess):
         green = [False, False, False, False, False]
@@ -128,10 +143,13 @@ class WordleGame:
         self.word_scores.pop(self.prev_guess)
 
         count_occurrences = Counter([letter for letter in self.green_letters if letter != '-'])
+        count_yellow = Counter([letter for letter in self.yellow_letters if letter != '-'])
 
         words_to_remove = set()
 
-        yellow_set = {letter for letter in self.yellow_letters if letter != '-'}
+        yellow_list = [letter for letter in self.yellow_letters if letter != '-']
+        green_list = [letter for letter in self.green_letters if letter != '-']
+        combined_list = yellow_list + green_list
 
         for word in list(self.word_scores.keys()):
             remove_word = False
@@ -146,8 +164,12 @@ class WordleGame:
                         break
 
             if not remove_word:
-                if not yellow_set.issubset(set(word)):
-                    remove_word = True
+                word_list = [letter for letter in word]
+                for letter in combined_list:
+                    if letter in word_list:
+                        word_list.remove(letter)
+                    else:
+                        remove_word = True
                 else:
                     for count, letter in enumerate(word):
                         if self.yellow_letters[count] != '-' and self.yellow_letters[count] == letter:
@@ -157,7 +179,7 @@ class WordleGame:
             if not remove_word:
                 word_counter = Counter(word)
                 for letter in self.no_more_occurrences:
-                    if word_counter[letter] > count_occurrences[letter]:
+                    if word_counter[letter] > (count_occurrences[letter] + count_yellow[letter]):
                         remove_word = True
                         break
 
