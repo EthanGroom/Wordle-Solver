@@ -16,15 +16,19 @@ class Menu:
         user_input = input()
         rand_num = random.randrange(14854)
         if user_input == "1":
-            game = WordleGame(self.word_list[rand_num], True, self.word_list)
+            game = WordleGame(self.word_list[rand_num], True, self.word_list, 0)
             game.start()
         elif user_input == "2":
-            game = WordleGame(self.word_list[rand_num], False, self.word_list)
+            print("Choose heuristic:\n1. Non-positional frequency: always use highest score\n2. Non-positional frequency: use highest score with unique letters for first word\n3. Non-positional frequency: use highest score with unique letters for first two words")
+            user_heuristic = input()
+            game = WordleGame(self.word_list[rand_num], False, self.word_list, user_heuristic)
             game.start()
         elif user_input == "3":
+            print("Choose heuristic:\n1. Non-positional frequency: always use highest score\n2. Non-positional frequency: use highest score with unique letters for first word\n3. Non-positional frequency: use highest score with unique letters for first two words")
+            user_heuristic = input()
             solves = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
             for word in self.word_list:
-                game = WordleGame(word, False, self.word_list)
+                game = WordleGame(word, False, self.word_list, user_heuristic)
                 solve = game.start()
                 solves[solve] += 1
             for solve in solves:
@@ -45,14 +49,14 @@ class Menu:
 
 
 class WordleGame:
-    def __init__(self, word, human_player, word_list):
+    def __init__(self, word, human_player, word_list, heuristic):
         self.target = word
         self.human_player = human_player
         self.word_list = word_list
+        self.heuristic = heuristic
         self.letter_frequencies = {}
         self.word_scores = {}
         self.letters_not_in_word = set()
-        self.prev_guess = ""
         self.green_letters = ['-'] * 5
         self.yellow_letters = ['-'] * 5
         self.no_more_occurrences = set()
@@ -76,6 +80,8 @@ class WordleGame:
             print(f"Word was {self.target}")
 
         if not self.human_player:
+            self.word_scores.clear()
+            self.letter_frequencies.clear()
             for word in self.word_list:
                 for letter in word:
                     if letter in self.letter_frequencies:
@@ -89,23 +95,13 @@ class WordleGame:
                     score += self.letter_frequencies[letter]
                 self.word_scores[word] = score
 
-            first_guess = max(
-                (score, key)
-                for score, key in zip(self.word_scores.values(), self.word_scores.keys())
-                if len(set(key)) == len(key)
-            )[1]
-
-            print(f"Starting guess is: {first_guess}")
             i = 0
             while i < 6:
                 print(f"Guess {i + 1}:")
-                if i == 0:
-                    guess = first_guess
-                    self.prev_guess = guess
-                else:
-                    guess = self.generate_ai_guess()
-                    self.prev_guess = guess
+                self.prune_words()
+                guess = self.generate_word(i + 1, self.heuristic)
                 if guess == self.target:
+                    self.check_guess(guess)
                     print(f"Solved in {i + 1} guesses!")
                     print(f"Word was {self.target}")
                     return i + 1
@@ -139,9 +135,7 @@ class WordleGame:
             print(colors[count] + letter, end="", flush=True)
         print("\u001B[0m")
 
-    def generate_ai_guess(self) -> str:
-        self.word_scores.pop(self.prev_guess)
-
+    def prune_words(self):
         count_occurrences = Counter([letter for letter in self.green_letters if letter != '-'])
         count_yellow = Counter([letter for letter in self.yellow_letters if letter != '-'])
 
@@ -191,10 +185,42 @@ class WordleGame:
 
         self.yellow_letters = ['-'] * 5
 
-        return max(
-            (score, word)
-            for word, score in self.word_scores.items()
-        )[1]
+    def generate_word(self, try_count, heuristic):
+        if heuristic == '1':
+            return max(
+                (score, word)
+                for word, score in self.word_scores.items()
+            )[1]
+        elif heuristic == '2':
+            if try_count == 1:
+                return max(
+                    (score, key)
+                    for score, key in zip(self.word_scores.values(), self.word_scores.keys())
+                    if len(set(key)) == len(key)
+                )[1]
+            else:
+                return max(
+                    (score, word)
+                    for word, score in self.word_scores.items()
+                )[1]
+        elif heuristic == '3':
+            if try_count == 1 or try_count == 2:
+                try:
+                    return max(
+                        (score, key)
+                        for score, key in zip(self.word_scores.values(), self.word_scores.keys())
+                        if len(set(key)) == len(key)
+                    )[1]
+                except ValueError:
+                    return max(
+                        (score, word)
+                        for word, score in self.word_scores.items()
+                    )[1]
+            else:
+                return max(
+                    (score, word)
+                    for word, score in self.word_scores.items()
+                )[1]
 
 
 if __name__ == "__main__":
