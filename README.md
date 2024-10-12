@@ -45,3 +45,48 @@ Solved in 4 moves: 4192
 Solved in 5 moves: 3489
 
 Solved in 6 moves: 2158
+
+#### 4. Positional frequency: always use highest score
+No solution: 2493
+
+Solved in 1 move: 1
+
+Solved in 2 moves: 137
+
+Solved in 3 moves: 1530
+
+Solved in 4 moves: 4128
+
+Solved in 5 moves: 4105
+
+Solved in 6 moves: 2461
+
+#### 5. Positional frequency: use highest score with unique letters for first word
+No solution: 2266
+
+Solved in 1 move: 1
+
+Solved in 2 moves: 203
+
+Solved in 3 moves: 1886
+
+Solved in 4 moves: 4310
+
+Solved in 5 moves: 3932
+
+Solved in 6 moves: 2257
+
+#### 6. Positional frequency: use highest score with unique letters for first two words
+No solution: 2122
+
+Solved in 1 move: 1
+
+Solved in 2 moves: 203
+
+Solved in 3 moves: 2006
+
+Solved in 4 moves: 4447
+
+Solved in 5 moves: 3925
+
+Solved in 6 moves: 2151
