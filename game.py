@@ -5,6 +5,9 @@ ANSI_RESET = "\u001B[0m" + "\u001B[7m"
 ANSI_GREEN = "\u001b[32m" + "\u001B[7m"
 ANSI_YELLOW = "\u001B[33m" + "\u001B[7m"
 
+ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
+            'V', 'W', 'X', 'Y', 'Z']
+
 
 class Menu:
     def __init__(self):
@@ -19,12 +22,12 @@ class Menu:
             game = WordleGame(self.word_list[rand_num], True, self.word_list, 0)
             game.start()
         elif user_input == "2":
-            print("Choose heuristic:\n1. Non-positional frequency: always use highest score\n2. Non-positional frequency: use highest score with unique letters for first word\n3. Non-positional frequency: use highest score with unique letters for first two words")
+            print("Choose heuristic:\n1. Non-positional frequency: always use highest score\n2. Non-positional frequency: use highest score with unique letters for first word\n3. Non-positional frequency: use highest score with unique letters for first two words\n4. Positional frequency: always use highest score\n5. Positional frequency: use highest score with unique letters for first word\n6. Positional frequency: use highest score with unique letters for first two words")
             user_heuristic = input()
             game = WordleGame(self.word_list[rand_num], False, self.word_list, user_heuristic)
             game.start()
         elif user_input == "3":
-            print("Choose heuristic:\n1. Non-positional frequency: always use highest score\n2. Non-positional frequency: use highest score with unique letters for first word\n3. Non-positional frequency: use highest score with unique letters for first two words")
+            print("Choose heuristic:\n1. Non-positional frequency: always use highest score\n2. Non-positional frequency: use highest score with unique letters for first word\n3. Non-positional frequency: use highest score with unique letters for first two words\n4. Positional frequency: always use highest score\n5. Positional frequency: use highest score with unique letters for first word\n6. Positional frequency: use highest score with unique letters for first two words")
             user_heuristic = input()
             solves = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
             for word in self.word_list:
@@ -60,6 +63,8 @@ class WordleGame:
         self.green_letters = ['-'] * 5
         self.yellow_letters = ['-'] * 5
         self.no_more_occurrences = set()
+        self.positional_letter_frequencies = [0] * 130
+        self.positional_word_scores = {}
 
     def start(self):
         print("Starting Wordle Game")
@@ -83,17 +88,26 @@ class WordleGame:
             self.word_scores.clear()
             self.letter_frequencies.clear()
             for word in self.word_list:
-                for letter in word:
+                for count, letter in enumerate(word):
                     if letter in self.letter_frequencies:
                         self.letter_frequencies[letter] += 1
                     else:
                         self.letter_frequencies[letter] = 1
 
+                    index = ((ALPHABET.index(letter) * 5) + 1) + count
+                    self.positional_letter_frequencies[index - 1] += 1
+
             for word in self.word_list:
                 score = 0
-                for letter in word:
+                positional_score = 0
+                for count, letter in enumerate(word):
                     score += self.letter_frequencies[letter]
+
+                    score_index = ((ALPHABET.index(letter) * 5) + 1) + count
+                    positional_score += self.positional_letter_frequencies[score_index - 1]
+
                 self.word_scores[word] = score
+                self.positional_word_scores[word] = positional_score
 
             i = 0
             while i < 6:
@@ -182,6 +196,7 @@ class WordleGame:
 
         for word in words_to_remove:
             self.word_scores.pop(word)
+            self.positional_word_scores.pop(word)
 
         self.yellow_letters = ['-'] * 5
 
@@ -220,6 +235,41 @@ class WordleGame:
                 return max(
                     (score, word)
                     for word, score in self.word_scores.items()
+                )[1]
+        elif heuristic == '4':
+            return max(
+                (score, word)
+                for word, score in self.positional_word_scores.items()
+            )[1]
+        elif heuristic == '5':
+            if try_count == 1:
+                return max(
+                    (score, key)
+                    for score, key in zip(self.positional_word_scores.values(), self.positional_word_scores.keys())
+                    if len(set(key)) == len(key)
+                )[1]
+            else:
+                return max(
+                    (score, word)
+                    for word, score in self.positional_word_scores.items()
+                )[1]
+        elif heuristic == '6':
+            if try_count == 1 or try_count == 2:
+                try:
+                    return max(
+                        (score, key)
+                        for score, key in zip(self.positional_word_scores.values(), self.positional_word_scores.keys())
+                        if len(set(key)) == len(key)
+                    )[1]
+                except ValueError:
+                    return max(
+                        (score, word)
+                        for word, score in self.positional_word_scores.items()
+                    )[1]
+            else:
+                return max(
+                    (score, word)
+                    for word, score in self.positional_word_scores.items()
                 )[1]
 
 
