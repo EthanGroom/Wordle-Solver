@@ -12,6 +12,10 @@ ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'
 class Menu:
     def __init__(self):
         self.word_list = []
+        self.word_scores = {}
+        self.letter_frequencies = {}
+        self.positional_letter_frequencies = [0] * 130
+        self.positional_word_scores = {}
 
     def start(self):
         self.create_word_list()
@@ -19,19 +23,21 @@ class Menu:
         user_input = input()
         rand_num = random.randrange(14854)
         if user_input == "1":
-            game = WordleGame(self.word_list[rand_num], True, self.word_list, 0)
+            game = WordleGame(self.word_list[rand_num], True, self.word_list, 0, None, None)
             game.start()
         elif user_input == "2":
-            print("Choose heuristic:\n1. Non-positional frequency: always use highest score\n2. Non-positional frequency: use highest score with unique letters for first word\n3. Non-positional frequency: use highest score with unique letters for first two words\n4. Positional frequency: always use highest score\n5. Positional frequency: use highest score with unique letters for first word\n6. Positional frequency: use highest score with unique letters for first two words")
+            print("Choose heuristic:\n1. Non-positional frequency: always use highest score\n2. Non-positional frequency: use highest score with unique letters for first word\n3. Non-positional frequency: use highest score with unique letters for first two words\n4. Positional frequency: always use highest score\n5. Positional frequency: use highest score with unique letters for first word\n6. Positional frequency: use highest score with unique letters for first two words\n7. Positional frequency: use words with all different letters for first two guesses")
             user_heuristic = input()
-            game = WordleGame(self.word_list[rand_num], False, self.word_list, user_heuristic)
+            game = WordleGame(self.word_list[rand_num], False, self.word_list, self.word_scores,
+                              self.positional_word_scores, user_heuristic)
             game.start()
         elif user_input == "3":
-            print("Choose heuristic:\n1. Non-positional frequency: always use highest score\n2. Non-positional frequency: use highest score with unique letters for first word\n3. Non-positional frequency: use highest score with unique letters for first two words\n4. Positional frequency: always use highest score\n5. Positional frequency: use highest score with unique letters for first word\n6. Positional frequency: use highest score with unique letters for first two words")
+            print("Choose heuristic:\n1. Non-positional frequency: always use highest score\n2. Non-positional frequency: use highest score with unique letters for first word\n3. Non-positional frequency: use highest score with unique letters for first two words\n4. Positional frequency: always use highest score\n5. Positional frequency: use highest score with unique letters for first word\n6. Positional frequency: use highest score with unique letters for first two words\n7. Positional frequency: use words with all different letters for first two guesses")
             user_heuristic = input()
             solves = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
             for word in self.word_list:
-                game = WordleGame(word, False, self.word_list, user_heuristic)
+                game = WordleGame(word, False, self.word_list, self.word_scores, self.positional_word_scores,
+                                  user_heuristic)
                 solve = game.start()
                 solves[solve] += 1
             for solve in solves:
@@ -50,9 +56,31 @@ class Menu:
         self.word_list = data.upper().splitlines()
         file.close()
 
+        for word in self.word_list:
+            for count, letter in enumerate(word):
+                if letter in self.letter_frequencies:
+                    self.letter_frequencies[letter] += 1
+                else:
+                    self.letter_frequencies[letter] = 1
+
+                index = ((ALPHABET.index(letter) * 5) + 1) + count
+                self.positional_letter_frequencies[index - 1] += 1
+
+        for word in self.word_list:
+            score = 0
+            positional_score = 0
+            for count, letter in enumerate(word):
+                # score += self.letter_frequencies[letter]
+
+                score_index = ((ALPHABET.index(letter) * 5) + 1) + count
+                positional_score += self.positional_letter_frequencies[score_index - 1]
+
+            self.word_scores[word] = score
+            self.positional_word_scores[word] = positional_score
+
 
 class WordleGame:
-    def __init__(self, word, human_player, word_list, heuristic):
+    def __init__(self, word, human_player, word_list, word_scores, positional_word_scores, heuristic):
         self.target = word
         self.human_player = human_player
         self.word_list = word_list
@@ -63,8 +91,14 @@ class WordleGame:
         self.green_letters = ['-'] * 5
         self.yellow_letters = ['-'] * 5
         self.no_more_occurrences = set()
+        self.starting_word_scores = word_scores
+        self.starting_positional_word_scores = positional_word_scores
+        self.letter_frequencies = {}
         self.positional_letter_frequencies = [0] * 130
+        self.first_guess = ""
+
         self.positional_word_scores = {}
+        self.word_scores = {}
 
     def start(self):
         print("Starting Wordle Game")
@@ -85,31 +119,9 @@ class WordleGame:
             print(f"Word was {self.target}")
 
         if not self.human_player:
-            self.word_scores.clear()
-            self.letter_frequencies.clear()
-            for word in self.word_list:
-                for count, letter in enumerate(word):
-                    if letter in self.letter_frequencies:
-                        self.letter_frequencies[letter] += 1
-                    else:
-                        self.letter_frequencies[letter] = 1
-
-                    index = ((ALPHABET.index(letter) * 5) + 1) + count
-                    self.positional_letter_frequencies[index - 1] += 1
-
-            for word in self.word_list:
-                score = 0
-                positional_score = 0
-                for count, letter in enumerate(word):
-                    score += self.letter_frequencies[letter]
-
-                    score_index = ((ALPHABET.index(letter) * 5) + 1) + count
-                    positional_score += self.positional_letter_frequencies[score_index - 1]
-
-                self.word_scores[word] = score
-                self.positional_word_scores[word] = positional_score
-
             i = 0
+            self.word_scores = self.starting_word_scores.copy()
+            self.positional_word_scores = self.starting_positional_word_scores.copy()
             while i < 6:
                 print(f"Guess {i + 1}:")
                 self.prune_words()
@@ -266,6 +278,25 @@ class WordleGame:
                         (score, word)
                         for word, score in self.positional_word_scores.items()
                     )[1]
+            else:
+                return max(
+                    (score, word)
+                    for word, score in self.positional_word_scores.items()
+                )[1]
+        elif heuristic == '7':
+            if try_count == 1:
+                self.first_guess = max(
+                    (score, key)
+                    for score, key in zip(self.positional_word_scores.values(), self.positional_word_scores.keys())
+                    if len(set(key)) == len(key)
+                )[1]
+                return self.first_guess
+            elif try_count == 2:
+                return max(
+                    (score, key)
+                    for score, key in zip(self.starting_positional_word_scores.values(), self.starting_positional_word_scores.keys())
+                    if len(set(key)) == len(key) and len(set(key).intersection(set(self.first_guess))) == 0
+                )[1]
             else:
                 return max(
                     (score, word)

@@ -90,3 +90,18 @@ Solved in 4 moves: 4447
 Solved in 5 moves: 3925
 
 Solved in 6 moves: 2151
+
+#### 7. Positional frequency: use words with all different letters for first two guesses
+No solution: 1673
+
+Solved in 1 move: 1
+
+Solved in 2 moves: 1
+
+Solved in 3 moves: 2490
+
+Solved in 4 moves: 4916
+
+Solved in 5 moves: 3810
+
+Solved in 6 moves: 1964
