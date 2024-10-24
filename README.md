@@ -105,3 +105,33 @@ Solved in 4 moves: 4916
 Solved in 5 moves: 3810
 
 Solved in 6 moves: 1964
+
+#### 8.
+No solution: 1670
+
+Solved in 1 move: 1
+
+Solved in 2 moves: 203
+
+Solved in 3 moves: 2204
+
+Solved in 4 moves: 4951
+
+Solved in 5 moves: 3921
+
+Solved in 6 moves: 1905
+
+#### 9.
+No solution: 1416
+
+Solved in 1 move: 1
+
+Solved in 2 moves: 1
+
+Solved in 3 moves: 2490
+
+Solved in 4 moves: 5222
+
+Solved in 5 moves: 3888
+
+Solved in 6 moves: 1837
