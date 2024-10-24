@@ -106,7 +106,7 @@ Solved in 5 moves: 3810
 
 Solved in 6 moves: 1964
 
-#### 8.
+#### 8. Positional frequency: use highest score with unique letters for first two words and rescoring
 No solution: 1670
 
 Solved in 1 move: 1
@@ -121,7 +121,7 @@ Solved in 5 moves: 3921
 
 Solved in 6 moves: 1905
 
-#### 9.
+#### 9. Positional frequency: use highest score with all different letters for first two guesses and rescoring
 No solution: 1416
 
 Solved in 1 move: 1
